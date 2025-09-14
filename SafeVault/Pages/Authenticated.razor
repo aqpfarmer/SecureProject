@@ -13,9 +13,7 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <!-- Debug info, remove in production 
-            <p><b>Debug:</b> @debugMessage</p>
-            -->
+            <!-- Debug info removed for production -->
 
             @if (userInfo == null)
             {
@@ -103,7 +101,7 @@
 
 @code {
     private SecureProject.Shared.Models.User userInfo;
-    private string debugMessage = "Starting...";
+    // ...existing code...
     private EditModel editModel = new EditModel();
     private string saveMessage;
     private bool _loaded = false;
@@ -146,34 +144,25 @@
         if (!_loaded && firstRender)
         {
             _loaded = true;
-            debugMessage = "Initializing...";
             accessToken = await JS.InvokeAsync<string>("localStorage.getItem", "token");
             refreshToken = await JS.InvokeAsync<string>("localStorage.getItem", "refreshToken");
             if (!string.IsNullOrEmpty(accessToken))
             {
-                debugMessage = "Token found, parsing JWT...";
                 var handler = new JwtSecurityTokenHandler();
                 var jwtToken = handler.ReadJwtToken(accessToken);
                 var username = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-                debugMessage = $"Parsed username: {username}";
                 if (!string.IsNullOrEmpty(username))
                 {
                     try
                     {
-                        debugMessage = "Making API call...";
-                        Logger.LogInformation($"Making API call to /api/users/{username}");
                         var http = ClientFactory.CreateClient("SafeVaultApi");
                         var request = new HttpRequestMessage(HttpMethod.Get, $"api/users/{username}");
                         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                         var response = await http.SendAsync(request);
-                        debugMessage = $"API response status: {response.StatusCode}";
                         if (response.IsSuccessStatusCode)
                         {
                             var rawJson = await response.Content.ReadAsStringAsync();
-                            debugMessage = $"Raw user JSON: {rawJson}";
-                            Logger.LogInformation($"Raw user JSON: {rawJson}");
                             userInfo = System.Text.Json.JsonSerializer.Deserialize<SecureProject.Shared.Models.User>(rawJson);
-                            debugMessage = "User info loaded.";
                             // Initialize edit model
                             if (userInfo != null)
                             {
@@ -183,24 +172,18 @@
                         }
                         else
                         {
-                            var errorJson = await response.Content.ReadAsStringAsync();
-                            debugMessage = $"API error response: {errorJson}";
-                            Logger.LogWarning($"API error response: {errorJson}");
                             userInfo = null;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         userInfo = null;
-                        debugMessage = $"Exception: {ex.Message}";
-                        Logger.LogError(ex, "Error fetching user info");
                     }
                 }
             }
             else
             {
                 userInfo = null;
-                debugMessage = "No token found.";
             }
             StateHasChanged();
         }

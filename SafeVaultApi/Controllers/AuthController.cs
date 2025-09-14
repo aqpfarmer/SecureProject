@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using BCrypt.Net;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace SafeVaultApi.Controllers
 {
@@ -14,10 +15,17 @@ namespace SafeVaultApi.Controllers
     {
         // Simple in-memory store for refresh tokens (replace with DB for production)
         private static Dictionary<string, string> RefreshTokens = new();
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(ILogger<AuthController> logger)
+        {
+            _logger = logger;
+        }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
+            _logger.LogInformation($"Login attempt for user: {request.Username} at {DateTime.UtcNow}");
             if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
                 return Unauthorized();
 
@@ -43,12 +51,18 @@ namespace SafeVaultApi.Controllers
             cmd.Parameters.AddWithValue("$username", request.Username);
             using var reader = cmd.ExecuteReader();
             if (!reader.Read())
+            {
+                _logger.LogWarning($"Login failed: user {request.Username} not found at {DateTime.UtcNow}");
                 return Unauthorized();
+            }
 
             var hashedPassword = reader.GetString(0);
             var roles = reader.GetString(1);
             if (!BCrypt.Net.BCrypt.Verify(request.Password, hashedPassword))
+            {
+                _logger.LogWarning($"Login failed: invalid password for user {request.Username} at {DateTime.UtcNow}");
                 return Unauthorized();
+            }
 
             var claims = new[]
             {
@@ -71,6 +85,7 @@ namespace SafeVaultApi.Controllers
             var refreshToken = Guid.NewGuid().ToString() + Guid.NewGuid().ToString();
             RefreshTokens[request.Username] = refreshToken;
 
+            _logger.LogInformation($"Login success for user: {request.Username} at {DateTime.UtcNow}");
             return Ok(new {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 refreshToken
@@ -80,12 +95,17 @@ namespace SafeVaultApi.Controllers
         [HttpPost("refresh")]
         public IActionResult Refresh([FromBody] RefreshRequest request)
         {
+            _logger.LogInformation($"Refresh token attempt for user: {request.Username} at {DateTime.UtcNow}");
             if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.RefreshToken))
                 return Unauthorized();
 
             // Validate refresh token
             if (!RefreshTokens.TryGetValue(request.Username, out var storedToken) || storedToken != request.RefreshToken)
+            {
+                _logger.LogWarning($"Refresh token failed for user {request.Username} at {DateTime.UtcNow}");
                 return Unauthorized();
+            }
+            _logger.LogInformation($"Refresh token success for user: {request.Username} at {DateTime.UtcNow}");
 
             // Get user roles from DB
             string connectionString = "Data Source=../SeedUsers.db";
