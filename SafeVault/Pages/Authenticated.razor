@@ -14,10 +14,11 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <!-- Debug info removed for production -->
-
             @if (userInfo == null)
             {
-                <div class="alert alert-warning">User info could not be loaded. Please check your login or API connection.</div>
+                <div class="alert alert-warning">
+                    User info could not be loaded. Please check your login or API connection.
+                </div>
             }
             else
             {
@@ -47,53 +48,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card shadow-sm rounded">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Welcome, @userInfo?.Name !</h4>
-                    </div>
-                    <div class="card-body">
-                        <EditForm Model="editModel" OnValidSubmit="HandleSave">
-                            <div class="row mb-2">
-                                <div class="col-4 fw-bold">Email:</div>
-                                <div class="col-8">
-                                    <InputText class="form-control" @bind-Value="editModel.Email" />
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-4 fw-bold">Username:</div>
-                                <div class="col-8">@userInfo?.Username</div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-4 fw-bold">Password:</div>
-                                <div class="col-8">
-                                    <InputText class="form-control" type="password" @bind-Value="editModel.Password" />
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-4"></div>
-                                <div class="col-8">
-                                    <button type="submit" class="btn btn-success">Save Changes</button>
-                                    @if (!string.IsNullOrEmpty(saveMessage))
-                                    {
-                                        <span class="ms-3 text-success">@saveMessage</span>
-                                    }
-                                </div>
-                            </div>
-                        </EditForm>
-                        <div class="row mb-2">
-                            <div class="col-4 fw-bold">Roles:</div>
-                            <div class="col-8">
-                                @if (userInfo?.Roles != null)
-                                {
-                                    foreach (var role in userInfo.Roles.Split(','))
-                                    {                                        
-                                        <span class="badge bg-info text-dark me-1">@role.Trim() </span>
-                                    }
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
             }
         </div>
     </div>
@@ -101,13 +56,13 @@
 
 @code {
     private SecureProject.Shared.Models.User userInfo;
-    // ...existing code...
     private EditModel editModel = new EditModel();
     private string saveMessage;
     private bool _loaded = false;
     private string accessToken = "";
     private string refreshToken = "";
     private string refreshMessage = "";
+
     private async Task HandleRefreshToken()
     {
         refreshMessage = "";

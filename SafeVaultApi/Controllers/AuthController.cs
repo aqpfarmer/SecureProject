@@ -77,7 +77,7 @@ namespace SafeVaultApi.Controllers
                 issuer: null,
                 audience: null,
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddMinutes(5),
                 signingCredentials: creds
             );
 
@@ -131,7 +131,7 @@ namespace SafeVaultApi.Controllers
                 issuer: null,
                 audience: null,
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddMinutes(5),
                 signingCredentials: creds
             );
 
