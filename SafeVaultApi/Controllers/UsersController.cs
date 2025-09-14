@@ -11,14 +11,27 @@ namespace SafeVaultApi.Controllers
     [Microsoft.AspNetCore.Authorization.Authorize]
     public class UsersController : ControllerBase
     {
-        private bool IsInputSafe(string input)
+        private readonly ILogger<UsersController> _logger;
+
+        public UsersController(ILogger<UsersController> logger)
         {
-            if (string.IsNullOrWhiteSpace(input)) return false;
-            // Basic checks for SQL/script injection
+            _logger = logger;
+        }
+
+        private bool IsInputSafe(string input, string fieldName = "")
+        {
+            if (string.IsNullOrWhiteSpace(input)) {
+                _logger?.LogWarning($"Blocked empty or whitespace input for field '{fieldName}' at {DateTime.UtcNow}");
+                return false;
+            }
+            // Basic checks for SQL/script injection/XSS
             string lowered = input.ToLower();
             if (lowered.Contains("select") || lowered.Contains("insert") || lowered.Contains("delete") || lowered.Contains("update") ||
                 lowered.Contains("drop") || lowered.Contains("--") || lowered.Contains(";") || lowered.Contains("<script") || lowered.Contains("</script>"))
+            {
+                _logger?.LogWarning($"Malicious input detected in field '{fieldName}': '{input}' at {DateTime.UtcNow}");
                 return false;
+            }
             return true;
         }
     
@@ -94,8 +107,11 @@ namespace SafeVaultApi.Controllers
         {
             EnsureTable();
             // Validate input
-            if (!IsInputSafe(user.Username) || !IsInputSafe(user.Password) || !IsInputSafe(user.Name) || !IsInputSafe(user.Email) || !IsInputSafe(user.Roles))
+            if (!IsInputSafe(user.Username, "Username") || !IsInputSafe(user.Password, "Password") || !IsInputSafe(user.Name, "Name") || !IsInputSafe(user.Email, "Email") || !IsInputSafe(user.Roles, "Roles"))
+            {
+                _logger?.LogWarning($"Blocked user creation due to malicious input. Username: {user.Username}, Name: {user.Name}, Email: {user.Email}, Roles: {user.Roles} at {DateTime.UtcNow}");
                 return BadRequest("Malicious input detected.");
+            }
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
             var cmd = connection.CreateCommand();
@@ -124,8 +140,11 @@ namespace SafeVaultApi.Controllers
         {
             EnsureTable();
             // Validate input
-            if (!IsInputSafe(username) || !IsInputSafe(updatedUser.Password) || !IsInputSafe(updatedUser.Name) || !IsInputSafe(updatedUser.Email) || !IsInputSafe(updatedUser.Roles))
+            if (!IsInputSafe(username, "Username") || !IsInputSafe(updatedUser.Password, "Password") || !IsInputSafe(updatedUser.Name, "Name") || !IsInputSafe(updatedUser.Email, "Email") || !IsInputSafe(updatedUser.Roles, "Roles"))
+            {
+                _logger?.LogWarning($"Blocked user update due to malicious input. Username: {username}, Name: {updatedUser.Name}, Email: {updatedUser.Email}, Roles: {updatedUser.Roles} at {DateTime.UtcNow}");
                 return BadRequest("Malicious input detected.");
+            }
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
             var cmd = connection.CreateCommand();
