@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SafeVaultApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+af1d04088dcae92b21c557a77aaba441ddf69811")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+82bf3dcb2c880b46c24f2e579ce26b7e95b635e3")]
 [assembly: System.Reflection.AssemblyProductAttribute("SafeVaultApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SafeVaultApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

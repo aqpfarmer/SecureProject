@@ -1,0 +1,22 @@
+# Ignore build output
+bin/
+obj/
+
+# Ignore SQLite database
+SeedUsers.db
+
+# Ignore user secrets and local config
+*.user
+*.suo
+*.vs
+
+# Ignore other IDE files
+.vscode/
+.idea/
+
+# Ignore logs
+*.log
+
+# Ignore OS files
+Thumbs.db
+.DS_Store
