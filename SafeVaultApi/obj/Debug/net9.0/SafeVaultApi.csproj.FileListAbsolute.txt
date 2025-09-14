@@ -66,3 +66,4 @@ C:\Users\chris\source\repos\SecureProject\SafeVaultApi\obj\Debug\net9.0\refint\S
 C:\Users\chris\source\repos\SecureProject\SafeVaultApi\obj\Debug\net9.0\SafeVaultApi.pdb
 C:\Users\chris\source\repos\SecureProject\SafeVaultApi\obj\Debug\net9.0\SafeVaultApi.genruntimeconfig.cache
 C:\Users\chris\source\repos\SecureProject\SafeVaultApi\obj\Debug\net9.0\ref\SafeVaultApi.dll
+C:\Users\chris\source\repos\SecureProject\SafeVaultApi\obj\Debug\net9.0\SafeVaultApi.sourcelink.json

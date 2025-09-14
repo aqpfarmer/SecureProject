@@ -9,3 +9,4 @@ C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\
 C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\refint\SecureProject.Shared.dll
 C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.pdb
 C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\ref\SecureProject.Shared.dll
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.sourcelink.json

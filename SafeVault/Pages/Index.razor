@@ -19,7 +19,9 @@
 		<InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" style="width: 25%;" />
 	</div>
 	<button type="submit" class="btn btn-primary">Login</button>
+
 </EditForm>
+<button class="btn btn-secondary mt-2" @onclick="NavigateToRegister">Register</button>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -27,6 +29,10 @@
 }
 
 @code {
+	private void NavigateToRegister()
+	{
+		Navigation.NavigateTo("/register");
+	}
 	private LoginModel loginModel = new LoginModel();
 	private string errorMessage;
 
@@ -65,8 +71,10 @@
 			var json = await response.Content.ReadAsStringAsync();
 			var doc = System.Text.Json.JsonDocument.Parse(json);
 			var token = doc.RootElement.GetProperty("token").GetString();
-			// Store token in localStorage
+			var refreshToken = doc.RootElement.TryGetProperty("refreshToken", out var rtProp) ? rtProp.GetString() : "";
+			// Store tokens in localStorage
 			await JS.InvokeVoidAsync("localStorage.setItem", "token", token);
+			await JS.InvokeVoidAsync("localStorage.setItem", "refreshToken", refreshToken);
 			// Parse roles from token and update AuthState
 			var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
 			var jwtToken = handler.ReadJwtToken(token);

@@ -481,3 +481,4 @@ C:\Users\chris\source\repos\SecureProject\SecureProject.Tests\obj\Debug\net9.0\r
 C:\Users\chris\source\repos\SecureProject\SecureProject.Tests\obj\Debug\net9.0\SecureProject.Tests.pdb
 C:\Users\chris\source\repos\SecureProject\SecureProject.Tests\obj\Debug\net9.0\SecureProject.Tests.genruntimeconfig.cache
 C:\Users\chris\source\repos\SecureProject\SecureProject.Tests\obj\Debug\net9.0\ref\SecureProject.Tests.dll
+C:\Users\chris\source\repos\SecureProject\SecureProject.Tests\obj\Debug\net9.0\SecureProject.Tests.sourcelink.json

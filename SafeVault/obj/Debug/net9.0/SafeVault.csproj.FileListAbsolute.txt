@@ -45,3 +45,5 @@ C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\refint\Safe
 C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\SafeVault.pdb
 C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\SafeVault.genruntimeconfig.cache
 C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\ref\SafeVault.dll
+C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\SafeVault.sourcelink.json
+C:\Users\chris\source\repos\SecureProject\SafeVault\obj\Debug\net9.0\compressed\bmoxa6pmid-7yn21t1xp7.gz

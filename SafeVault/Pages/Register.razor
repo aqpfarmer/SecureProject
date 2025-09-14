@@ -1,0 +1,79 @@
+@using System.Net.Http.Json
+@page "/register"
+@using System.Net.Http
+@using System.Text.RegularExpressions
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+
+<h3>Register New User</h3>
+<div class="card mt-4">
+    <div class="card-body">
+        <EditForm Model="newUser" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mb-2">
+                <InputText class="form-control" @bind-Value="newUser.Username" placeholder="Username" />
+            </div>
+            <div class="mb-2">
+                <InputText class="form-control" @bind-Value="newUser.Name" placeholder="Name" />
+            </div>
+            <div class="mb-2">
+                <InputText class="form-control" @bind-Value="newUser.Email" placeholder="Email" />
+            </div>            
+            <div class="mb-2">
+                <InputText class="form-control" @bind-Value="newUser.Password" type="password" placeholder="Password" />
+            </div>
+            <button class="btn btn-success" type="submit">Register</button>
+        </EditForm>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger mt-2">@ErrorMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="alert alert-success mt-2">@SuccessMessage</div>
+        }
+    </div>
+</div>
+
+@code {
+    private SecureProject.Shared.Models.User newUser = new();
+    private string ErrorMessage = "";
+    private string SuccessMessage = "";
+
+    private bool IsPasswordStrong(string password)
+    {
+        return !string.IsNullOrEmpty(password) &&
+            password.Length >= 12 &&
+            Regex.IsMatch(password, "[A-Z]") &&
+            Regex.IsMatch(password, "[a-z]") &&
+            Regex.IsMatch(password, "[0-9]") &&
+                Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':"",.<>/?]"); // double escape for C#
+    }
+
+    private async Task HandleRegister()
+    {
+        ErrorMessage = "";
+        SuccessMessage = "";
+        if (string.IsNullOrWhiteSpace(newUser.Roles))
+        {
+            newUser.Roles = "User";
+        }
+        if (!IsPasswordStrong(newUser.Password))
+        {
+            ErrorMessage = "Password must be at least 12 characters and include upper, lower, digit, and special character.";
+            return;
+        }
+        var http = ClientFactory.CreateClient("SafeVaultApi");
+        var response = await http.PostAsJsonAsync("api/register", newUser);
+        if (response.IsSuccessStatusCode)
+        {
+            SuccessMessage = "Registration successful! You can now log in.";
+            newUser = new();
+        }
+        else
+        {
+            ErrorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}
