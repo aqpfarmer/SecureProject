@@ -1,0 +1,18 @@
+
+@page "/logout"
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h3>Sorry to see you go.</h3>
+<p>Login again anytime.</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Remove JWT from localStorage
+        await JS.InvokeVoidAsync("localStorage.removeItem", "token");
+        // Wait 5 seconds then force reload to update NavMenu
+        await Task.Delay(5000);
+        Navigation.NavigateTo("/", true); // true = force reload
+    }
+}

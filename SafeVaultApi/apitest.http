@@ -1,0 +1,50 @@
+# Parameterized JWT token
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWRtaW4xIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4sTWFuYWdlciIsImV4cCI6MTc1Nzg3NjM3MX0.2wPjaJMweomUEXDEVZACMbWvOhJY1seavq3YxcLhmLY
+
+# SafeVaultApi HTTP API Test
+
+### Login to get JWT token
+POST https://localhost:7001/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin1",
+  "password": "A!dm1n$2025!Strong"
+}
+
+### Get all users
+GET https://localhost:7001/api/users
+Authorization: Bearer {{token}}
+
+### Get user by username
+GET https://localhost:7001/api/users/admin1
+Authorization: Bearer {{token}}
+
+### Create new user
+POST https://localhost:7001/api/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "username": "newuser",
+  "password": "newpass",
+  "name": "New User",
+  "email": "newuser@secure.com",
+  "roles": "User"
+}
+
+### Update user
+PUT https://localhost:7001/api/users/newuser
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "password": "updatedpass123451234512345!!@@",
+  "name": "Updated User",
+  "email": "updateduser@secure.com",
+  "roles": "User,Tester"
+}
+
+### Delete user
+DELETE https://localhost:7001/api/users/newuser
+Authorization: Bearer {{token}}

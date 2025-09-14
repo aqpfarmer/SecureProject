@@ -1,0 +1,73 @@
+@page "/auditor"
+@using Microsoft.AspNetCore.Components
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@inject NavigationManager Navigation
+@inject SafeVault.Services.AuthStateService AuthState
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JS
+
+@if (!IsAuditor)
+{
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h4>Access Denied</h4>
+            <p>You do not have permission to view this page.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h3>Auditor Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <p>Welcome, Auditor! Here you can review logs and reports.</p>
+                <!-- Add auditor features here -->
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> userRoles = new List<string>();
+    private bool IsAuditor => userRoles.Any(r => r.Trim().Equals("Auditor", StringComparison.OrdinalIgnoreCase));
+    private bool _checkedRoles = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_checkedRoles && firstRender)
+        {
+            _checkedRoles = true;
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var username = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(username))
+                {
+                    var http = ClientFactory.CreateClient("SafeVaultApi");
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"api/users/{username}");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    var response = await http.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var rawJson = await response.Content.ReadAsStringAsync();
+                        var user = System.Text.Json.JsonSerializer.Deserialize<SecureProject.Shared.Models.User>(rawJson);
+                        userRoles = user?.Roles?.Split(',').Select(r => r.Trim()).ToList() ?? new List<string>();
+                        StateHasChanged();
+                        if (!IsAuditor)
+                        {
+                            Navigation.NavigateTo("/");
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\bin\Debug\net9.0\SecureProject.Shared.deps.json
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\bin\Debug\net9.0\SecureProject.Shared.dll
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\bin\Debug\net9.0\SecureProject.Shared.pdb
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.AssemblyInfoInputs.cache
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.AssemblyInfo.cs
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.csproj.CoreCompileInputs.cache
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.dll
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\refint\SecureProject.Shared.dll
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\SecureProject.Shared.pdb
+C:\Users\chris\source\repos\SecureProject\SecureProject.Shared\obj\Debug\net9.0\ref\SecureProject.Shared.dll

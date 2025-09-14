@@ -1,0 +1,133 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@using SafeVault.Services
+
+
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">SafeVault</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="@(AuthState.IsAuthenticated ? "/authenticated" : "/")" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </li>
+        @foreach (var role in userRoles)
+        {
+            var normalizedRole = role.Trim().ToLowerInvariant();
+            if (normalizedRole == "admin")
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin">
+                        <span class="oi oi-lock-locked" aria-hidden="true"></span> Admin
+                    </NavLink>
+                </li>
+            }
+            else if (normalizedRole == "manager")
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="manager">
+                        <span class="oi oi-briefcase" aria-hidden="true"></span> Manager
+                    </NavLink>
+                </li>
+            }
+            else if (normalizedRole == "auditor")
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="auditor">
+                        <span class="oi oi-magnifying-glass" aria-hidden="true"></span> Auditor
+                    </NavLink>
+                </li>
+            }
+            else if (normalizedRole == "tester")
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="tester">
+                        <span class="oi oi-beaker" aria-hidden="true"></span> Tester
+                    </NavLink>
+                </li>
+            }
+        }
+        @if (AuthState.IsAuthenticated && userRoles.Count > 0)
+        {
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="user">
+                    <span class="oi oi-person" aria-hidden="true"></span> User
+                </NavLink>
+            </li>
+        }
+        @if (AuthState.IsAuthenticated)
+        {
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="logout">
+                    <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
+                </NavLink>
+            </li>
+        }
+    </ul>
+</div>
+
+<!-- NavMenu.razor 
+<div class="container mt-2">
+    <div class="alert alert-info">
+        <b>Navbar Debug:</b><br />
+        userRoles: @(string.Join(", ", userRoles))
+    </div>
+</div>
+-->
+
+@code {
+    [Inject] private IJSRuntime JS { get; set; }
+    [Inject] private AuthStateService AuthState { get; set; }
+    private bool collapseNavMenu = true;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+    private List<string> userRoles = new List<string>();
+    private bool _checkedRoles = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_checkedRoles && firstRender)
+        {
+            _checkedRoles = true;
+            var token = await GetTokenFromLocalStorageAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                userRoles = jwtToken.Claims
+                    .Where(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+                    .SelectMany(c => c.Value.Split(','))
+                    .Select(r => r.Trim())
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .ToList();
+                AuthState.SetAuthenticated(userRoles);
+                StateHasChanged();
+            }
+            else
+            {
+                AuthState.SetLoggedOut();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task<string> GetTokenFromLocalStorageAsync()
+    {
+        try
+        {
+            return await JS.InvokeAsync<string>("localStorage.getItem", "token");
+        }
+        catch
+        {
+            return "";
+        }
+    }
+}

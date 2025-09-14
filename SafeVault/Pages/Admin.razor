@@ -1,0 +1,333 @@
+@page "/admin"
+@using Microsoft.AspNetCore.Components
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@inject NavigationManager Navigation
+@inject SafeVault.Services.AuthStateService AuthState
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JS
+
+@if (!IsAdmin)
+{
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h4>Access Denied</h4>
+            <p>You do not have permission to view this page.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container mt-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3>Admin Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <p>Welcome, Admin! Here you can manage users and system settings.</p>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4>User Management</h4>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success mb-2" @onclick="ShowAddUser">Add User</button>
+                @if (IsLoading)
+                {
+                    <div>Loading users...</div>
+                }
+                else if (Users == null || Users.Count == 0)
+                {
+                    <div>No users found.</div>
+                }
+                else
+                {
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Roles</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Users)
+                            {
+                                <tr>
+                                    <td>@user.Username</td>
+                                    <td>
+                                        @if (EditUser?.Username == user.Username)
+                                        {
+                                            <input class="form-control" @bind="EditUser.Name" />
+                                        }
+                                        else
+                                        {
+                                            @user.Name
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (EditUser?.Username == user.Username)
+                                        {
+                                            <input class="form-control" @bind="EditUser.Email" />
+                                        }
+                                        else
+                                        {
+                                            @user.Email
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (EditUser?.Username == user.Username)
+                                        {
+                                            <input class="form-control" @bind="EditUser.Roles" />
+                                        }
+                                        else
+                                        {
+                                            @user.Roles
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (EditUser?.Username == user.Username)
+                                        {
+                                            <button class="btn btn-primary btn-sm me-1" @onclick="() => SaveUser(user.Username)">Save</button>
+                                            <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">Cancel</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-warning btn-sm me-1" @onclick="() => EditUserRow(user)">Edit</button>
+                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteUser(user.Username)">Delete</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                @if (ShowAdd)
+                {
+                    <div class="card mt-3">
+                        <div class="card-header bg-success text-white">Add New User</div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <input class="form-control" placeholder="Username" @bind="NewUser.Username" />
+                            </div>
+                            <div class="mb-2">
+                                <input class="form-control" placeholder="Password" type="password" @bind="NewUser.Password" />
+                            </div>
+                            <div class="mb-2">
+                                <input class="form-control" placeholder="Name" @bind="NewUser.Name" />
+                            </div>
+                            <div class="mb-2">
+                                <input class="form-control" placeholder="Email" @bind="NewUser.Email" />
+                            </div>
+                            <div class="mb-2">
+                                <input class="form-control" placeholder="Roles (comma separated)" @bind="NewUser.Roles" />
+                            </div>
+                            <button class="btn btn-success me-2" @onclick="AddUser">Add</button>
+                            <button class="btn btn-secondary" @onclick="CancelAdd">Cancel</button>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger mt-2">@ErrorMessage</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> userRoles = new List<string>();
+    private bool IsAdmin => userRoles.Any(r => r.Trim().Equals("Admin", StringComparison.OrdinalIgnoreCase));
+    private bool _checkedRoles = false;
+
+    private List<SecureProject.Shared.Models.User> Users = new();
+    private SecureProject.Shared.Models.User EditUser;
+    private SecureProject.Shared.Models.User NewUser = new();
+    private bool ShowAdd = false;
+    private bool IsLoading = true;
+    private string ErrorMessage = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_checkedRoles && firstRender)
+        {
+            _checkedRoles = true;
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+            if (!string.IsNullOrEmpty(token))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var username = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(username))
+                {
+                    var http = ClientFactory.CreateClient("SafeVaultApi");
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"api/users/{username}");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    var response = await http.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var rawJson = await response.Content.ReadAsStringAsync();
+                        var user = System.Text.Json.JsonSerializer.Deserialize<SecureProject.Shared.Models.User>(rawJson);
+                        userRoles = user?.Roles?.Split(',').Select(r => r.Trim()).ToList() ?? new List<string>();
+                        StateHasChanged();
+                        if (!IsAdmin)
+                        {
+                            Navigation.NavigateTo("/");
+                        }
+                        else
+                        {
+                            await LoadUsers(token);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task LoadUsers(string token)
+    {
+        IsLoading = true;
+        ErrorMessage = "";
+        try
+        {
+            var http = ClientFactory.CreateClient("SafeVaultApi");
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/users");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var rawJson = await response.Content.ReadAsStringAsync();
+                Users = System.Text.Json.JsonSerializer.Deserialize<List<SecureProject.Shared.Models.User>>(rawJson);
+            }
+            else
+            {
+                ErrorMessage = "Failed to load users.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private void EditUserRow(SecureProject.Shared.Models.User user)
+    {
+        EditUser = new SecureProject.Shared.Models.User
+        {
+            Username = user.Username,
+            Password = user.Password,
+            Name = user.Name,
+            Email = user.Email,
+            Roles = user.Roles
+        };
+    }
+
+    private void CancelEdit()
+    {
+        EditUser = null;
+    }
+
+    private async Task SaveUser(string username)
+    {
+        ErrorMessage = "";
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+        try
+        {
+            var http = ClientFactory.CreateClient("SafeVaultApi");
+            var request = new HttpRequestMessage(HttpMethod.Put, $"api/users/{username}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(EditUser), System.Text.Encoding.UTF8, "application/json");
+            var response = await http.SendAsync(request);
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                await LoadUsers(token);
+                EditUser = null;
+            }
+            else
+            {
+                ErrorMessage = "Failed to update user.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task DeleteUser(string username)
+    {
+        ErrorMessage = "";
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+        try
+        {
+            var http = ClientFactory.CreateClient("SafeVaultApi");
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"api/users/{username}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await http.SendAsync(request);
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                await LoadUsers(token);
+            }
+            else
+            {
+                ErrorMessage = "Failed to delete user.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void ShowAddUser()
+    {
+        ShowAdd = true;
+        NewUser = new SecureProject.Shared.Models.User();
+    }
+
+    private void CancelAdd()
+    {
+        ShowAdd = false;
+        NewUser = new SecureProject.Shared.Models.User();
+    }
+
+    private async Task AddUser()
+    {
+        ErrorMessage = "";
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "token");
+        try
+        {
+            var http = ClientFactory.CreateClient("SafeVaultApi");
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/users");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(NewUser), System.Text.Encoding.UTF8, "application/json");
+            var response = await http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadUsers(token);
+                ShowAdd = false;
+                NewUser = new SecureProject.Shared.Models.User();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                ErrorMessage = "Username already exists.";
+            }
+            else
+            {
+                ErrorMessage = "Failed to add user.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+}
