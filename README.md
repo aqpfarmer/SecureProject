@@ -58,9 +58,10 @@ A secure, multi-project .NET solution for user management, authentication, and m
    ```
    dotnet test SecureProject.Tests
    ```
-6. Important! Run this command to accept the certificates
-   ...
-   **dotnet dev-certs https --trust**
+6. **Trust Certificates**
+   ```
+   dotnet dev-certs https --trust
+   ```
 
 ## Security Features
 - JWT authentication and authorization
